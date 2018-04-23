@@ -202,7 +202,7 @@ function HolidayCalendar($scope) {
 
     vm.showCal = false;
 
-    var weekNbr = getWeekNbr(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    var weekNbr = getWeekNbr(date.getFullYear(), date.getMonth() + 1, ((date.getDay() === 0) ? date.getDate() : date.getDate() + 1));
     var monday = getDateOfWeek(weekNbr, date.getFullYear());
     
     vm.currentMonthNbr = monday.getMonth();
