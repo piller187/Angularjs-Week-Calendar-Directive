@@ -1,0 +1,65 @@
+﻿<div style="z-index: 1; background-color: white;">
+    <input type="text" ng-model="vm.week" ng-click="vm.onClick($event)" ng-readonly="true" />
+    <div ng-show="vm.showCal" style="background-color: white; border:1px solid black; position: absolute; width: 300px; -moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;-o-user-select:none;">
+        <a style="float:right;
+    margin-top:-4px;
+    margin-right:0px;
+    cursor:pointer;
+    color: black;
+    font-size: 15px;
+    font-weight: bold;
+    display: inline-block;
+    line-height: 0px;
+    padding: 11px 3px;" ng-click="vm.close()">X</a>
+        <div style="padding: 10px;">
+            <div style="display: inline;">
+                <div style="display: inline; padding: 5px; font-size: 30px;">
+                    <a href="" style="text-decoration:none;" ng-click="vm.lowerMonth()">&lt;</a>
+                </div>
+                <div style="display: inline; font-size: 30px; padding: 5px;">
+                    {{vm.currentMonth.substring(0, 3)}}
+                </div>
+                <div style="display: inline;padding: 5px; font-size: 30px;">
+                    <a href="" style="text-decoration:none;" ng-click="vm.higherMonth()">&gt;</a>
+                </div>
+            </div>
+            <div style="display: inline; float: right;">
+                <div style="display: inline; font-size: 30px; padding: 5px;">
+                    <a href="" style="text-decoration:none;" ng-click="vm.lowerYear()">&lt;</a>
+                </div>
+                <div style="display: inline; font-size: 30px; padding: 5px;">
+                    {{vm.currentYear}}
+                </div>
+                <div style="display: inline; padding: 5px; font-size: 30px;">
+                    <a href="" style="text-decoration:none;" ng-click="vm.higherYear()">&gt;</a>
+                </div>
+            </div>
+        </div>
+        <div>
+            <table style="width: 100%; padding: 0px; margin: 0px; border-spacing: 0; border-collapse: collapse;">
+                <tr>
+                    <th align="center">Week</th>
+                    <th align="center">Mon</th>
+                    <th align="center">Tue</th>
+                    <th align="center">Wed</th>
+                    <th align="center">Thu</th>
+                    <th align="center">Fri</th>
+                    <th align="center">Sat</th>
+                    <th align="center">Sun</th>
+                </tr>
+                <tr ng-repeat="row in vm.cal track by $index" ng-style="vm.selectedWeekIndex == $index && {'background-color':'gray'}">
+                    <td style="border-top: 1px solid #ddd;" align="center">
+                        <a href="" style="text-decoration:none; color:inherit;" ng-click="vm.weekClick($index)">
+                            <div>
+                                {{vm.weeks[$index]}}
+                            </div>
+                        </a>
+                    </td>
+                    <td style="border-top: 1px solid #ddd;" align="center" ng-repeat="col in row track by $index">
+                        {{col}}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
