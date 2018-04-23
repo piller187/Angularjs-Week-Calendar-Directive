@@ -1,170 +1,199 @@
 var app = angular.module("myApp", []);
 
+app.service("GetData", function($q){
+  this.GetStartingDate = function(){
+    return $q.when(new Date(2018, 0, 5));
+  }
+});
+
 // test controller
-app.controller("myController", function () {
-    var vm = this;
+app.controller("myController", function(GetData) {
+  var vm = this;
 
-    vm.selectedDate = "";
+  vm.selectedDate = "";
 
-    vm.dateChange = function (dt) {
-        vm.selectedDate = dt;
-        console.log("Date Model: " + vm.selectedDate);
-    }
+  // testing date
+  GetData.GetStartingDate()
+    .then(function(data){
+      vm.myDate = data;
+    });
+
+  vm.dateChange = function(dt) {
+    vm.selectedDate = dt;
+    console.log("Date Model: " + vm.selectedDate);
+  }
+  
+  vm.updateTest = function(){
+    vm.myDate = new Date(2018, 10, 4);
+  }
 });
 
 // our calendar component
-app.directive('holCalendar', function () {
-    return {
-        restrict: 'E',
-        controller: HolidayCalendar,
-        templateUrl: 'HolWeekCalendarTemplate.html',
-        bindToController: true,
-        controllerAs: 'vm',
-        scope: {
-            returnedDay: '@',
-            onChange: '&'
-        }
-    };
+app.directive('holCalendar', function() {
+  return {
+    restrict: 'E',
+    controller: ['$scope', HolidayCalendar],
+    templateUrl: 'HolidayCalendarTemplate.html',
+    bindToController: true,
+    controllerAs: 'vm',
+    scope: {
+      returnedDay: '@',
+      onChange: '&',
+      initialDate: '='
+    }
+  };
 });
 
 
-function HolidayCalendar() {
-    var vm = this;
+function HolidayCalendar($scope) {
+  var vm = this;
 
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
 
-    const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+  const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+  
+  vm.cal = createArray(6, 7);
+  vm.weeks = createArray(6);
 
-    function createArray(length) {
-        var arr = new Array(length || 0),
-          i = length;
+  // init the calendar to start with
+  init();
+  
+  // ===================
+  // class methods below
+  // ===================
 
-        arr.fill("");
+  function createArray(length) {
+    var arr = new Array(length || 0),
+      i = length;
 
-        if (arguments.length > 1) {
-            var args = Array.prototype.slice.call(arguments, 1);
-            while (i--) arr[length - 1 - i] = createArray.apply(this, args);
-        }
+    arr.fill("");
 
-        return arr;
+    if (arguments.length > 1) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      while (i--) arr[length - 1 - i] = createArray.apply(this, args);
     }
 
-    function getWeekNbr(year, month, day) {
-        function serial(days) {
-            return 86400000 * days;
-        }
+    return arr;
+  }
 
-        function dateserial(year, month, day) {
-            return (new Date(year, month - 1, day).valueOf());
-        }
-
-        function weekday(date) {
-            return (new Date(date)).getDay() + 1;
-        }
-
-        function yearserial(date) {
-            return (new Date(date)).getFullYear();
-        }
-        var date = year instanceof Date ? year.valueOf() : typeof year === "string" ? new Date(year).valueOf() : dateserial(year, month, day),
-          date2 = dateserial(yearserial(date - serial(weekday(date - serial(1))) + serial(4)), 1, 3);
-        return ~~((date - date2 + serial(weekday(date2) + 5)) / serial(7));
+  function getWeekNbr(year, month, day) {
+    function serial(days) {
+      return 86400000 * days;
     }
 
-    function daysInMonth(month, year) {
-        return new Date(year, month, 0).getDate();
+    function dateserial(year, month, day) {
+      return (new Date(year, month - 1, day).valueOf());
     }
 
-    function getDateOfWeek(weekNumber, year) {
-        //Create a date object starting january first of chosen year, plus the number of days in a week multiplied by the week number to get the right date.
-        return new Date(year, 0, 1 + ((weekNumber - 1) * 7));
+    function weekday(date) {
+      return (new Date(date)).getDay() + 1;
     }
 
-    function addDays(date, days) {
-        var result = new Date(date);
-        result.setDate(result.getDate() + days);
-        return result;
+    function yearserial(date) {
+      return (new Date(date)).getFullYear();
     }
+    var date = year instanceof Date ? year.valueOf() : typeof year === "string" ? new Date(year).valueOf() : dateserial(year, month, day),
+      date2 = dateserial(yearserial(date - serial(weekday(date - serial(1))) + serial(4)), 1, 3);
+    return ~~((date - date2 + serial(weekday(date2) + 5)) / serial(7));
+  }
 
-    function clearCal() {
-        for (var week = 0; week < 6; week++) {
-            for (var day = 0; day < 7; day++) {
-                vm.cal[week][day] = "";
-            }
+  function daysInMonth(month, year) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  function getDateOfWeek(weekNumber, year) {
+    //Create a date object starting january first of chosen year, plus the number of days in a week multiplied by the week number to get the right date.
+    return new Date(year, 0, 1 + ((weekNumber - 1) * 7));
+  }
+
+  function addDays(date, days) {
+    var result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  }
+
+  function clearCal() {
+    for (var week = 0; week < 6; week++) {
+      for (var day = 0; day < 7; day++) {
+        vm.cal[week][day] = "";
+      }
+    }
+  }
+
+  function clearWeeks() {
+    for (var week = 0; week < 6; week++) {
+      vm.weeks[week] = "";
+    }
+  }
+
+  function fillOutCurrentMonth(year, month) {
+    var date = new Date(year, month, 1);
+
+    clearCal();
+    clearWeeks();
+
+    // get the first day and the total number of days in this month
+    var firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    var totalDaysInMonth = daysInMonth(vm.currentMonthNbr + 1, vm.currentYear);
+
+    // adjust for starting on monday vs sunday (js starts the week on sunday)
+    if (firstDay === 0)
+      firstDay = 6;
+    else
+      firstDay--;
+
+    var dayCount = 1;
+    var weekIndex = 0;
+
+    // 1st week is special and we need to know what day of the week the 1st is on
+    for (var day = 0; day < 7; day++) {
+      if (day >= firstDay) {
+        vm.cal[0][day] = dayCount;
+
+        // handle filling in week nbr for the first week if it starts on a monday for this month/year
+        if (day === 0) { // 0 = Monday
+          // even though we are checking for monday we need to add 1 day to it to make it a Tue in order for the getWeekNbr() to correctly handle DST
+          vm.weeks[weekIndex] = getWeekNbr(vm.currentYear, vm.currentMonthNbr + 1, dayCount + 1);
         }
+
+        dayCount++;
+      }
     }
 
-    function clearWeeks() {
-        for (var week = 0; week < 6; week++) {
-            vm.weeks[week] = "";
+    weekIndex++;
+
+    // fill in the rest of the weeks
+    for (var week = 1; week < 6; week++) {
+      for (day = 0; day < 7; day++) {
+        vm.cal[week][day] = dayCount;
+
+        // handle filling the week number        
+        if (day === 0) { // 0 = Monday
+          // even though we are checking for monday we need to add 1 day to it to make it a Tue in order for the getWeekNbr() to correctly handle DST
+          vm.weeks[weekIndex] = getWeekNbr(vm.currentYear, vm.currentMonthNbr + 1, dayCount + 1);
+          weekIndex++;
         }
+
+        dayCount++;
+
+        if (dayCount > totalDaysInMonth)
+          return;
+      }
     }
+  }
 
-    function fillOutCurrentMonth(year, month) {
-        var date = new Date(year, month, 1);
-
-        clearCal();
-        clearWeeks();
-
-        // get the first day and the total number of days in this month
-        var firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-        var totalDaysInMonth = daysInMonth(vm.currentMonthNbr + 1, vm.currentYear);
-
-        // adjust for starting on monday vs sunday (js starts the week on sunday)
-        if (firstDay === 0)
-            firstDay = 6;
-        else
-            firstDay--;
-
-        var dayCount = 1;
-        var weekIndex = 0;
-
-        // 1st week is special and we need to know what day of the week the 1st is on
-        for (var day = 0; day < 7; day++) {
-            if (day >= firstDay) {
-                vm.cal[0][day] = dayCount;
-
-                // handle filling in week nbr for the first week if it starts on a monday for this month/year
-                if (day === 0) { // 0 = Monday
-                    // even though we are checking for monday we need to add 1 day to it to make it a Tue in order for the getWeekNbr() to correctly handle DST
-                    vm.weeks[weekIndex] = getWeekNbr(vm.currentYear, vm.currentMonthNbr + 1, dayCount + 1);
-                }
-
-                dayCount++;
-            }
-        }
-
-        weekIndex++;
-
-        // fill in the rest of the weeks
-        for (var week = 1; week < 6; week++) {
-            for (day = 0; day < 7; day++) {
-                vm.cal[week][day] = dayCount;
-
-                // handle filling the week number        
-                if (day === 0) { // 0 = Monday
-                    // even though we are checking for monday we need to add 1 day to it to make it a Tue in order for the getWeekNbr() to correctly handle DST
-                    vm.weeks[weekIndex] = getWeekNbr(vm.currentYear, vm.currentMonthNbr + 1, dayCount + 1);
-                    weekIndex++;
-                }
-
-                dayCount++;
-
-                if (dayCount > totalDaysInMonth)
-                    return;
-            }
-        }
-    }
-
+  function init() {
     // init to todays month/year
     var date = new Date();
-    vm.currentMonthNbr = date.getMonth();
-    vm.currentMonth = monthNames[vm.currentMonthNbr];
-    vm.currentYear = date.getFullYear();
+
+    // if there is an initial date then fill it out
+    if (vm.initialDate !== undefined){
+      date = vm.initialDate;
+    }
+      
     vm.selectedWeekIndex = -1;
-    vm.cal = createArray(6, 7);
-    vm.weeks = createArray(6);
 
     // when there is a highlighted week already but the user is navigating to other month/years
     vm.savedWeekIndex = -1;
@@ -173,101 +202,127 @@ function HolidayCalendar() {
 
     vm.showCal = false;
 
+    var weekNbr = getWeekNbr(date.getFullYear(), date.getMonth() + 1, date.getDate());
+    var monday = getDateOfWeek(weekNbr, date.getFullYear());
+    
+    vm.currentMonthNbr = monday.getMonth();
+    vm.currentMonth = monthNames[vm.currentMonthNbr];
+    vm.currentYear = monday.getFullYear();
+    
     fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
+    
+    // vm.weeks array is filled in now with each week number. get the index of the matching number and that is our seleceted index
+    vm.selectedWeekIndex = vm.weeks.indexOf(weekNbr);
+    
+    // set the text of the textbox
+    vm.week = "Week " + weekNbr + ", " + vm.currentYear;
+    
+    //console.log("Week Nbr From " + (date.getMonth() + 1) + "/" + date.getDate() + "/"  + date.getFullYear());
+    //console.log("Week Nbr =" + weekNbr);
+    //console.log("Monday " + monday);
+  }
 
-    vm.onClick = function (event) {
-        // when we click the input box save off the results
-        vm.savedWeekIndex = vm.selectedWeekIndex;
-        vm.savedWeekMonth = vm.currentMonth;
-        vm.savedWeekYear = vm.currentYear;
+  // when the initialValue variable changes we need to update our calendar
+  $scope.$watch(function(){ return vm.initialDate; }, function(oldValue, newValue) {
+    if (oldValue === newValue)
+      return;
 
-        vm.showCal = true;
-    };
+    init();
+  })
 
-    vm.close = function () {
-        vm.showCal = false;
-    }
+  vm.onClick = function(event) {
+    // when we click the input box save off the results
+    vm.savedWeekIndex = vm.selectedWeekIndex;
+    vm.savedWeekMonth = vm.currentMonth;
+    vm.savedWeekYear = vm.currentYear;
 
-    // clicking the week is the driving force of this control
-    vm.weekClick = function (index) {
-        vm.selectedWeekIndex = index; // this is for highlighting the week in the calendar html
-        vm.selectedWeek = vm.weeks[vm.selectedWeekIndex]; // this sets the week number
+    vm.showCal = true;
+  };
 
-        // calculate the monday of this week
-        var mondayOfWeek = getDateOfWeek(vm.selectedWeek, vm.currentYear);
+  vm.close = function() {
+    vm.showCal = false;
+  }
 
-        // get the day the user said they wanted in this week
-        var finalDate = addDays(mondayOfWeek, days.indexOf(vm.returnedDay.toLowerCase()));
+  // clicking the week is the driving force of this control
+  vm.weekClick = function(index) {
+    vm.selectedWeekIndex = index; // this is for highlighting the week in the calendar html
+    vm.selectedWeek = vm.weeks[vm.selectedWeekIndex]; // this sets the week number
 
-        vm.week = "Week " + vm.selectedWeek + ", " + vm.currentYear;
+    // calculate the monday of this week
+    var mondayOfWeek = getDateOfWeek(vm.selectedWeek, vm.currentYear);
 
-        vm.showCal = false;
+    // get the day the user said they wanted in this week
+    var finalDate = addDays(mondayOfWeek, days.indexOf(vm.returnedDay.toLowerCase()));
 
-        // raise our event
-        vm.onChange({
-            dt: finalDate
-        });
-    };
+    vm.week = "Week " + vm.selectedWeek + ", " + vm.currentYear;
 
-    vm.lowerMonth = function () {
-        vm.currentMonthNbr--;
+    vm.showCal = false;
 
-        if (vm.currentMonthNbr < 0)
-            vm.currentMonthNbr = 11;
+    // raise our event
+    vm.onChange({
+      dt: finalDate
+    });
+  };
 
-        vm.currentMonth = monthNames[vm.currentMonthNbr];
+  vm.lowerMonth = function() {
+    vm.currentMonthNbr--;
 
-        // restore the selected week as we're navigating between month/years
-        if (vm.currentMonth === vm.savedWeekMonth && vm.savedWeekYear === vm.currentYear)
-            vm.selectedWeekIndex = vm.savedWeekIndex;
-        else
-            vm.selectedWeekIndex = -1;
+    if (vm.currentMonthNbr < 0)
+      vm.currentMonthNbr = 11;
 
-        fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
-    };
+    vm.currentMonth = monthNames[vm.currentMonthNbr];
 
-    vm.higherMonth = function () {
-        vm.currentMonthNbr++;
+    // restore the selected week as we're navigating between month/years
+    if (vm.currentMonth === vm.savedWeekMonth && vm.savedWeekYear === vm.currentYear)
+      vm.selectedWeekIndex = vm.savedWeekIndex;
+    else
+      vm.selectedWeekIndex = -1;
 
-        if (vm.currentMonthNbr > 11)
-            vm.currentMonthNbr = 0;
+    fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
+  };
 
-        vm.currentMonth = monthNames[vm.currentMonthNbr];
+  vm.higherMonth = function() {
+    vm.currentMonthNbr++;
 
-        // restore the selected week as we're navigating between month/years
-        if (vm.currentMonth === vm.savedWeekMonth && vm.savedWeekYear === vm.currentYear)
-            vm.selectedWeekIndex = vm.savedWeekIndex;
-        else
-            vm.selectedWeekIndex = -1;
+    if (vm.currentMonthNbr > 11)
+      vm.currentMonthNbr = 0;
 
-        fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
-    };
+    vm.currentMonth = monthNames[vm.currentMonthNbr];
 
-    vm.lowerYear = function () {
-        vm.currentYear--;
+    // restore the selected week as we're navigating between month/years
+    if (vm.currentMonth === vm.savedWeekMonth && vm.savedWeekYear === vm.currentYear)
+      vm.selectedWeekIndex = vm.savedWeekIndex;
+    else
+      vm.selectedWeekIndex = -1;
 
-        vm.currentMonth = monthNames[vm.currentMonthNbr];
+    fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
+  };
 
-        // restore the selected week as we're navigating between years
-        if (vm.currentMonth === vm.savedWeekMonth && vm.savedWeekYear === vm.currentYear)
-            vm.selectedWeekIndex = vm.savedWeekIndex;
-        else
-            vm.selectedWeekIndex = -1;
+  vm.lowerYear = function() {
+    vm.currentYear--;
 
-        fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
-    };
+    vm.currentMonth = monthNames[vm.currentMonthNbr];
 
-    vm.higherYear = function () {
-        vm.currentYear++;
+    // restore the selected week as we're navigating between years
+    if (vm.currentMonth === vm.savedWeekMonth && vm.savedWeekYear === vm.currentYear)
+      vm.selectedWeekIndex = vm.savedWeekIndex;
+    else
+      vm.selectedWeekIndex = -1;
 
-        vm.currentMonth = monthNames[vm.currentMonthNbr];
+    fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
+  };
 
-        // restore the selected week as we're navigating between years
-        if (vm.currentMonth === vm.savedWeekMonth && vm.savedWeekYear === vm.currentYear)
-            vm.selectedWeekIndex = vm.savedWeekIndex;
-        else
-            vm.selectedWeekIndex = -1;
+  vm.higherYear = function() {
+    vm.currentYear++;
 
-        fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
-    };
+    vm.currentMonth = monthNames[vm.currentMonthNbr];
+
+    // restore the selected week as we're navigating between years
+    if (vm.currentMonth === vm.savedWeekMonth && vm.savedWeekYear === vm.currentYear)
+      vm.selectedWeekIndex = vm.savedWeekIndex;
+    else
+      vm.selectedWeekIndex = -1;
+
+    fillOutCurrentMonth(vm.currentYear, vm.currentMonthNbr);
+  };
 }
